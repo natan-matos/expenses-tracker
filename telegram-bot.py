@@ -4,6 +4,7 @@ from decimal import Decimal
 import telebot
 import pandas as pd
 import os
+import uuid
 
 # constants
 TOKEN = '6826005571:AAGTXt-l02duSH5nDRUzEMj2_gtWbOnXJg8'
@@ -46,26 +47,27 @@ valid_tags = []
 #                 'Tag': row['Tag']
 #             }
 #         )
-def store_data(expenses, date, tags, table):
-    # Retrieve existing data
-    response = table.scan()
-    existing_items = response['Items']
-    
-    # Merge existing data with new data
-    new_data = []
-    for exp, dt, tag in zip(expenses, date, tags):
-        new_item = {
-            'Date': dt,
-            'Expense': Decimal(str(exp)),
-            'Tag': tag
-        }
-        new_data.append(new_item)
-    all_items = existing_items + new_data
 
-    # Update table with new merged data
-    with table.batch_writer() as batch:
-        for item in all_items:
-            batch.put_item(Item=item)
+def store_data(expenses, date, tags, table):
+    df = pd.DataFrame({
+        'Expense': expenses,
+        'Date': date,
+        'Tag': tags
+    })
+
+    for index, row in df.iterrows():
+        # Generate a unique ID for each item
+        item_id = str(uuid.uuid4())
+
+        table.put_item(
+            Item={
+                'id': item_id,
+                'Date': row['Date'],
+                'Expense': Decimal(str(row['Expense'])),
+                'Tag': row['Tag']
+            }
+        )
+
 
 
 #------------------------------------------------------------------------------
