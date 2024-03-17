@@ -67,6 +67,7 @@ def index():
         if value != 'error':
             #write the value and date in the database
             send_message( chat_id, 'Correct Value')
+            handle_command( chat_id, value )
             return Response( 'OK', status=200 )
         else:
             send_message( chat_id, 'Invalid Value' )
