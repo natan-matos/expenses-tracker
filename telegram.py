@@ -2,7 +2,6 @@ import datetime
 import boto3
 from decimal import Decimal
 from flask import Flask, request, Response
-# from Monthly2 import Month
 import requests
 import os
 
