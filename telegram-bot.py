@@ -31,21 +31,42 @@ date = []
 valid_tags = []
 
 #----------------------------------------------------------------------i
-def store_data( expenses, date, tags, table ):
-    df = pd.DataFrame({
-        'Expense': expenses,
-        'Date': date,
-        'Tag': tags
-    })
+# def store_data( expenses, date, tags, table ):
+#     df = pd.DataFrame({
+#         'Expense': expenses,
+#         'Date': date,
+#         'Tag': tags
+#     })
 
-    for index, row in df.iterrows():
-        table.put_item(
-            Item={
-                'Date': row['Date'],
-                'Expense': Decimal( str( row['Expense'] ) ),
-                'Tag': row['Tag']
-            }
-        )
+#     for index, row in df.iterrows():
+#         table.put_item(
+#             Item={
+#                 'Date': row['Date'],
+#                 'Expense': Decimal( str( row['Expense'] ) ),
+#                 'Tag': row['Tag']
+#             }
+#         )
+def store_data(expenses, date, tags, table):
+    # Retrieve existing data
+    response = table.scan()
+    existing_items = response['Items']
+    
+    # Merge existing data with new data
+    new_data = []
+    for exp, dt, tag in zip(expenses, date, tags):
+        new_item = {
+            'Date': dt,
+            'Expense': Decimal(str(exp)),
+            'Tag': tag
+        }
+        new_data.append(new_item)
+    all_items = existing_items + new_data
+
+    # Update table with new merged data
+    with table.batch_writer() as batch:
+        for item in all_items:
+            batch.put_item(Item=item)
+
 
 #------------------------------------------------------------------------------
 @bot.message_handler(commands=['1'])
