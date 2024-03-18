@@ -31,22 +31,7 @@ date = []
 # define tags
 valid_tags = []
 
-#----------------------------------------------------------------------i
-# def store_data( expenses, date, tags, table ):
-#     df = pd.DataFrame({
-#         'Expense': expenses,
-#         'Date': date,
-#         'Tag': tags
-#     })
-
-#     for index, row in df.iterrows():
-#         table.put_item(
-#             Item={
-#                 'Date': row['Date'],
-#                 'Expense': Decimal( str( row['Expense'] ) ),
-#                 'Tag': row['Tag']
-#             }
-#         )
+#-----------------------------------------------------------------------------
 
 def store_data(expenses, date, tags, table):
     df = pd.DataFrame({
@@ -67,7 +52,9 @@ def store_data(expenses, date, tags, table):
                 'Tag': row['Tag']
             }
         )
-
+    expenses.clear()
+    date.clear()
+    tags.clear()
 
 
 #------------------------------------------------------------------------------
