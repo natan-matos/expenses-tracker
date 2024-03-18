@@ -30,10 +30,10 @@ user_data = {}
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
-    markup = types.ReplyKeyboardMarkup(row_width=2)
-    itembtn1 = types.KeyboardButton('Input new values')
-    itembtn2 = types.KeyboardButton('Query total expenses')
-    itembtn3 = types.KeyboardButton('Exit')
+    markup = types.InlineKeyboardMarkup(row_width=2)
+    itembtn1 = types.InlineKeyboardButton('Input new values')
+    itembtn2 = types.InlineKeyboardButton('Query total expenses')
+    itembtn3 = types.InlineKeyboardButton('Exit')
     markup.add(itembtn1, itembtn2, itembtn3)
     bot.send_message(message.chat.id, "Choose an option:", reply_markup=markup)
 
@@ -44,9 +44,9 @@ def ask_for_value(message):
 
 def process_value_step(message):
     user_data['Expense'] = message.text
-    markup = types.ReplyKeyboardMarkup(row_width=1)
+    markup = types.InlineKeyboardMarkup(row_width=1)
     for i in range(1, 6):
-        markup.add(types.KeyboardButton(f'Tag {i}'))
+        markup.add(types.InlineKeyboardButton(f'Tag {i}'))
     sent = bot.send_message(message.chat.id, 'Please choose a tag:', reply_markup=markup)
     bot.register_next_step_handler(sent, process_tag_step)
 
