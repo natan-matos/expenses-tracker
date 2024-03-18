@@ -31,36 +31,37 @@ user_data = {}
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    itembtn1 = types.InlineKeyboardButton('Input new values')
-    itembtn2 = types.InlineKeyboardButton('Query total expenses')
-    itembtn3 = types.InlineKeyboardButton('Exit')
+    itembtn1 = types.InlineKeyboardButton('Input new values', callback_data='input')
+    itembtn2 = types.InlineKeyboardButton('Query total expenses', callback_data='query')
+    itembtn3 = types.InlineKeyboardButton('Exit', callback_data='exit')
     markup.add(itembtn1, itembtn2, itembtn3)
     bot.send_message(message.chat.id, "Choose an option:", reply_markup=markup)
 
-@bot.message_handler(func=lambda message: message.text == 'Input new values')
-def ask_for_value(message):
-    sent = bot.send_message(message.chat.id, 'Please enter the value:')
+@bot.callback_query_handler(func=lambda call: call.data == 'input')
+def ask_for_value(call):
+    sent = bot.send_message(call.message.chat.id, 'Please enter the value:')
     bot.register_next_step_handler(sent, process_value_step)
 
 def process_value_step(message):
     user_data['Expense'] = message.text
-    markup = types.InlineKeyboardMarkup(row_width=1)
-    for i in range(1, 6):
-        markup.add(types.InlineKeyboardButton(f'Tag {i}'))
-    sent = bot.send_message(message.chat.id, 'Please choose a tag:', reply_markup=markup)
-    bot.register_next_step_handler(sent, process_tag_step)
+    markup = types.InlineKeyboardMarkup()
+    tags = ['mercado', 'farmacia', 'lanche', 'casa', 'outro']
+    for tag in tags:
+        markup.add(types.InlineKeyboardButton(tag, callback_data=f'tag_{tag}'))
+    bot.send_message(message.chat.id, 'Please choose a tag:', reply_markup=markup)
 
-def process_tag_step(message):
-    user_data['Tag'] = message.text
+@bot.callback_query_handler(func=lambda call: call.data.startswith('tag_'))
+def process_tag_step(call):
+    user_data['Tag'] = call.data.split('_')[1]
     user_data['Date'] = datetime.datetime.now().strftime('%Y-%m-%d')
     user_data['id'] = str(uuid.uuid4())
     table.put_item(Item=user_data)
-    bot.send_message(message.chat.id, 'Value saved successfully.')
-    send_welcome(message)
+    bot.send_message(call.message.chat.id, 'Value saved successfully.')
+    send_welcome(call.message)
 
-@bot.message_handler(func=lambda message: message.text == 'Query total expenses')
-def ask_for_month(message):
-    sent = bot.send_message(message.chat.id, 'Please enter the Month and Year (format: MM-YYYY):')
+@bot.callback_query_handler(func=lambda call: call.data == 'query')
+def ask_for_month(call):
+    sent = bot.send_message(call.message.chat.id, 'Please enter the Month and Year (format: MM-YYYY):')
     bot.register_next_step_handler(sent, process_month_step)
 
 def process_month_step(message):
@@ -72,8 +73,8 @@ def process_month_step(message):
     bot.send_message(message.chat.id, f'Total expenses for {month}-{year}: {total_expenses}')
     send_welcome(message)
 
-@bot.message_handler(func=lambda message: message.text == 'Exit')
-def process_exit_step(message):
-    send_welcome(message)
+@bot.callback_query_handler(func=lambda call: call.data == 'exit')
+def process_exit_step(call):
+    send_welcome(call.message)
 
 bot.polling()
