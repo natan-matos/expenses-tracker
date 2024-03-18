@@ -1,5 +1,6 @@
 import datetime
 import boto3
+from boto3.dynamodb.conditions import Attr, Key
 from decimal import Decimal
 import telebot
 from telebot import types
@@ -25,143 +26,54 @@ session = boto3.Session(
 dynamodb = session.resource( 'dynamodb', region_name='us-east-2')
 table = dynamodb.Table( 'ExpensesTable' )
 
-# expenses, date & tags lists
-expenses = []
-date = []
-valid_tags = []
-#----------------------------------------------------------------------------
-def store_data(expenses, date, tags, table):
-    df = pd.DataFrame({
-        'Expense': expenses,
-        'Date': date,
-        'Tag': tags
-    })
+user_data = {}
 
-    for index, row in df.iterrows():
-        # Generate a unique ID for each item
-        item_id = str(uuid.uuid4())
+@bot.message_handler(commands=['start'])
+def send_welcome(message):
+    markup = types.ReplyKeyboardMarkup(row_width=2)
+    itembtn1 = types.KeyboardButton('Input new values')
+    itembtn2 = types.KeyboardButton('Query total expenses')
+    itembtn3 = types.KeyboardButton('Exit')
+    markup.add(itembtn1, itembtn2, itembtn3)
+    bot.send_message(message.chat.id, "Choose an option:", reply_markup=markup)
 
-        table.put_item(
-            Item={
-                'id': item_id,
-                'Date': row['Date'],
-                'Expense': Decimal(str(row['Expense'])),
-                'Tag': row['Tag']
-            }
-        )
-    expenses.clear()
-    date.clear()
-    tags.clear()
+@bot.message_handler(func=lambda message: message.text == 'Input new values')
+def ask_for_value(message):
+    sent = bot.send_message(message.chat.id, 'Please enter the value:')
+    bot.register_next_step_handler(sent, process_value_step)
 
-#------------------------------------------------------------------------------
-@bot.message_handler(commands=['1'])
-def option1(message):
-    msg = bot.send_message(message.chat.id, 'Insert the value:')
-    bot.register_next_step_handler(msg, process_expense_step)
+def process_value_step(message):
+    user_data['Expense'] = message.text
+    markup = types.ReplyKeyboardMarkup(row_width=1)
+    for i in range(1, 6):
+        markup.add(types.KeyboardButton(f'Tag {i}'))
+    sent = bot.send_message(message.chat.id, 'Please choose a tag:', reply_markup=markup)
+    bot.register_next_step_handler(sent, process_tag_step)
 
-def process_expense_step(message):
-    try:
-        expense = float(message.text)
+def process_tag_step(message):
+    user_data['Tag'] = message.text
+    user_data['Date'] = datetime.datetime.now().strftime('%Y-%m-%d')
+    user_data['id'] = str(uuid.uuid4())
+    table.put_item(Item=user_data)
+    bot.send_message(message.chat.id, 'Value saved successfully.')
+    send_welcome(message)
 
-        msg = bot.send_message(message.chat.id, 'Insert Tag: ')
+@bot.message_handler(func=lambda message: message.text == 'Query total expenses')
+def ask_for_month(message):
+    sent = bot.send_message(message.chat.id, 'Please enter the Month and Year (format: MM-YYYY):')
+    bot.register_next_step_handler(sent, process_month_step)
 
-        bot.register_next_step_handler(msg, lambda message: process_tag_step(message, expense))
-    except ValueError:
-        bot.reply_to(message, 'Value Invalid!')
+def process_month_step(message):
+    month, year = map(int, message.text.split('-'))
+    response = table.scan(
+        FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
+    )
+    total_expenses = sum(float(item['Expense']) for item in response['Items'])
+    bot.send_message(message.chat.id, f'Total expenses for {month}-{year}: {total_expenses}')
+    send_welcome(message)
 
-def process_tag_step(message, expense):
-    tag = message.text
+@bot.message_handler(func=lambda message: message.text == 'Exit')
+def process_exit_step(message):
+    send_welcome(message)
 
-    valid_tags.append(tag)
-    expenses.append(expense)
-
-    current_date = datetime.datetime.now().strftime('%Y-%m-%d')
-    date.append(current_date)
-    store_data(expenses, date, valid_tags, table)
-
-    bot.reply_to(message, 'Value Added')
-    show_menu( message )
-
-#-------------------------------------------------------------------------
-# Define a dictionary to store the states of the users
-user_states = {}
-
-@bot.message_handler(commands=['2'])
-def option2( message ):
-    # Set the user's state to 'AWAITING_DATE'
-    user_states[message.chat.id] = 'AWAITING_DATE'
-    bot.reply_to(message, "Insira Mês e Ano assim: 3 2024")
-
-@bot.message_handler(func=lambda message: user_states.get(message.chat.id) == 'AWAITING_DATE')
-def handle_date(message):
-    # Split the message text into parts
-    parts = message.text.split()
-    if len(parts) != 2:
-        bot.reply_to(message, "eueu Mês e Ano assim: 3 2024")
-        return
-
-    # Parse the month and year from the message
-    month = int(parts[0])
-    year = int(parts[1])
-
-    # Define the function to get the expenses
-    def get_expenses_for_month(month, year, table):
-        response = table.scan()
-        items = response['Items']
-        total = 0
-        for item in items:
-            date = datetime.datetime.strptime(item['Date'], '%Y-%m-%d')
-
-            if date.month == month and date.year == year:
-                total += float(item['Expense'])
-        return total
-
-    # Call the function to get the expenses
-    total = get_expenses_for_month(month, year, table)
-
-    # Send a reply with the total expenses
-    bot.reply_to(message, f"Total expenses for {month}/{year}: {total}")
-    show_menu( message )
-
-    # Reset the user's state
-    user_states[message.chat.id] = None
-
-
-#------------------------------------------------------------------------------
-
-def check( message ):
-    return True
-
-def show_menu( message ):
-    keyboard = types.InlineKeyboardMarkup()
-    keyboard.row_width = 2
-    keyboard.add( types.InlineKeyboardButton('Inserir novos valores', callback_data='op1' ) )
-    keyboard.add( types.InlineKeyboardButton('Consultar Gastos', callback_data='op2' ) )
-    keyboard.add( types.InlineKeyboardButton('Sair', callback_data='op3' ) )
-    bot.send_message( message.chat.id, 'Escolha:', reply_markup=keyboard )
-
-@bot.message_handler( commands=['start'] )
-def start( message ):
-    show_menu( message )
-
-@bot.callback_query_handler( func=lambda call: True )
-def callback_query( call ):
-    if call.data == 'op1':
-        option1( call.message )
-    elif call.data == 'op2':
-        bot.answer_callback_query( call.id, 'Consultar Gastos' )
-        option2( call.message )
-        
-    elif call.data == 'op3':
-        bot.answer_callback_query( call.id, 'Sair' )
-        
-
-@bot.message_handler( commands=['1'] )
-def option1( message ):
-    msg = bot.send_message( message.chat.id, 'Insert the value:' )
-    bot.register_next_step_handler( msg, process_expense_step )
-
-
-
-bot.infinity_polling()
-
+bot.polling()
