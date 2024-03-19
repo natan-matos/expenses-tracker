@@ -1,12 +1,13 @@
-import datetime
-import boto3
-from boto3.dynamodb.conditions import Attr, Key
 from decimal import Decimal
 import telebot
 from telebot import types
+import boto3
+from boto3.dynamodb.conditions import Attr, Key
+import datetime
 import pandas as pd
 import os
 import uuid
+from flask import Flask, request
 
 # constants
 TOKEN = '6497461668:AAHIy0QYyuGePFj-xTxaBxnxiPMtWzLzuRw'
@@ -14,6 +15,7 @@ URL = f'https://api.telegram.org/bot{TOKEN}/'
 
 #-------------------------------------------------------------------
 bot = telebot.TeleBot(TOKEN)
+app = Flask(__name__)
 
 # Connect to AWS dynamodb
 access_key = os.getenv('AWS_ACCESS_KEY_ID')
@@ -27,6 +29,17 @@ dynamodb = session.resource( 'dynamodb', region_name='us-east-2')
 table = dynamodb.Table( 'ExpensesTable' )
 
 user_data = {}
+
+@app.route('/', methods=['POST'])
+def getMessage():
+    bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
+    return "!", 200
+
+@app.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url=f'{URL}{TOKEN}')
+    return "!", 200
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -77,4 +90,5 @@ def process_month_step(message):
 def process_exit_step(call):
     send_welcome(call.message)
 
-# bot.polling()
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=int(os.environ.get('PORT', 5000)))
