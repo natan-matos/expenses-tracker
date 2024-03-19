@@ -35,11 +35,11 @@ def getMessage():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "!", 200
 
-# @app.route("/")
-# def webhook():
-#     bot.remove_webhook()
-#     bot.set_webhook(url=f'{URL}{TOKEN}')
-#     return "!", 200
+@app.route("/")
+def webhook():
+    bot.remove_webhook()
+    bot.set_webhook(url=f'{URL}{TOKEN}')
+    return "!", 200
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
