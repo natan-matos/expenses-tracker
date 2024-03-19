@@ -77,4 +77,4 @@ def process_month_step(message):
 def process_exit_step(call):
     send_welcome(call.message)
 
-bot.polling()
+# bot.polling()
