@@ -77,14 +77,7 @@ def ask_for_month(call):
     sent = bot.send_message(call.message.chat.id, 'Inira Mês e Ano (format: MM-YYYY):')
     bot.register_next_step_handler(sent, process_month_step)
 
-# def process_month_step(message):
-#     month, year = map(int, message.text.split('-'))
-#     response = table.scan(
-#         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
-#     )
-#     total_expenses = sum(float(item['Expense']) for item in response['Items'])
-#     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
-#     send_welcome(message)
+
 def process_month_step(message):
     month, year = map(int, message.text.split('-'))
 
