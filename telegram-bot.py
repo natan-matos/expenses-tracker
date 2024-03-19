@@ -9,7 +9,7 @@ import os
 import uuid
 
 # constants
-TOKEN = '6826005571:AAGTXt-l02duSH5nDRUzEMj2_gtWbOnXJg8'
+TOKEN = '6497461668:AAHIy0QYyuGePFj-xTxaBxnxiPMtWzLzuRw'
 URL = f'https://api.telegram.org/bot{TOKEN}/'
 
 #-------------------------------------------------------------------
