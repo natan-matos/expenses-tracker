@@ -35,11 +35,11 @@ def getMessage():
     bot.process_new_updates([telebot.types.Update.de_json(request.stream.read().decode("utf-8"))])
     return "!", 200
 
-@app.route("/")
-def webhook():
-    bot.remove_webhook()
-    bot.set_webhook(url=f'{URL}{TOKEN}')
-    return "!", 200
+# @app.route("/")
+# def webhook():
+#     bot.remove_webhook()
+#     bot.set_webhook(url=f'{URL}{TOKEN}')
+#     return "!", 200
 
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
@@ -77,12 +77,30 @@ def ask_for_month(call):
     sent = bot.send_message(call.message.chat.id, 'Inira Mês e Ano (format: MM-YYYY):')
     bot.register_next_step_handler(sent, process_month_step)
 
+# def process_month_step(message):
+#     month, year = map(int, message.text.split('-'))
+#     response = table.scan(
+#         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
+#     )
+#     total_expenses = sum(float(item['Expense']) for item in response['Items'])
+#     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
+#     send_welcome(message)
+from collections import defaultdict
+
 def process_month_step(message):
     month, year = map(int, message.text.split('-'))
     response = table.scan(
         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
     )
-    total_expenses = sum(float(item['Expense']) for item in response['Items'])
+    expenses_by_tag = defaultdict(float)
+    total_expenses = 0
+    for item in response['Items']:
+        expenses_by_tag[item['Tag']] += float(item['Expense'])
+        total_expenses += float(item['Expense'])
+    
+    for tag, expense in expenses_by_tag.items():
+        bot.send_message(message.chat.id, f'Total Gastos em {tag} em {month}-{year}: {expense}')
+    
     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
     send_welcome(message)
 
