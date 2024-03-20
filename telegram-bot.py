@@ -8,6 +8,7 @@ import pandas as pd
 import os
 import uuid
 from flask import Flask, request
+from collections import defaultdict
 
 # constants
 TOKEN = '6497461668:AAHIy0QYyuGePFj-xTxaBxnxiPMtWzLzuRw'
@@ -78,28 +79,59 @@ def ask_for_month(call):
     bot.register_next_step_handler(sent, process_month_step)
 
 
+# def process_month_step(message):
+#     month, year = map(int, message.text.split('-'))
+
+#     response = table.scan(
+#         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
+#     )
+
+#     expenses_by_tag = {}
+#     for item in response['Items']:
+#         tag = item['Tag']
+#         expense = float(item['Expense'])
+#         expenses_by_tag.setdefault(tag, 0)  # Initialize tag if not present
+#         expenses_by_tag[tag] += expense
+#     expense_total = sum(float(item['Expense']) for item in response['Items'])
+
+#     # Format and send the grouped expenses
+#     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}:')
+#     for tag, total_expense in expenses_by_tag.items():
+#         bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
+# #-------------------------------------------------------------------------------
+#     bot.send_message( message.chat.id, f'Gasto total: R${expense_total}')
+     
+#     send_welcome(message)
 def process_month_step(message):
     month, year = map(int, message.text.split('-'))
-
     response = table.scan(
         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
     )
-
-    expenses_by_tag = {}
+    expenses_by_tag = defaultdict(float)
+    total_expenses = 0
     for item in response['Items']:
-        tag = item['Tag']
-        expense = float(item['Expense'])
-        expenses_by_tag.setdefault(tag, 0)  # Initialize tag if not present
-        expenses_by_tag[tag] += expense
-    expense_total = sum(float(item['Expense']) for item in response['Items'])
+        expenses_by_tag[item['Tag']] += float(item['Expense'])
+        total_expenses += float(item['Expense'])
 
-    # Format and send the grouped expenses
-    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}:')
-    for tag, total_expense in expenses_by_tag.items():
-        bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
-#-------------------------------------------------------------------------------
-    bot.send_message( message.chat.id, f'Gasto total: R${expense_total}')
-     
+    # Get the previous month's expenses
+    prev_month, prev_year = (month - 1, year) if month > 1 else (12, year - 1)
+    prev_response = table.scan(
+        FilterExpression=Key('Date').begins_with(f'{prev_year}-{prev_month:02d}')
+    )
+    prev_expenses_by_tag = defaultdict(float)
+    for item in prev_response['Items']:
+        prev_expenses_by_tag[item['Tag']] += float(item['Expense'])
+
+    # Calculate the percentage change for each tag
+    for tag, expense in expenses_by_tag.items():
+        prev_expense = prev_expenses_by_tag.get(tag, 0)
+        if prev_expense > 0:
+            percent_change = ((expense - prev_expense) / prev_expense) * 100
+        else:
+            percent_change = 100  # If there were no expenses in the previous month, consider it as a 100% increase
+        bot.send_message(message.chat.id, f'Total Gastos em {tag} em {month}-{year}: {expense} ({percent_change:+.2f}%)')
+
+    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
