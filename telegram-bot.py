@@ -96,6 +96,7 @@ def process_month_step(message):
     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}:')
     for tag, total_expense in expenses_by_tag.items():
         bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
+        
 
     send_welcome(message)
 
