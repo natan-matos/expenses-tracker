@@ -91,13 +91,15 @@ def process_month_step(message):
         expense = float(item['Expense'])
         expenses_by_tag.setdefault(tag, 0)  # Initialize tag if not present
         expenses_by_tag[tag] += expense
+    expense_total = sum(float(item['Expense']) for item in response['Items'])
 
     # Format and send the grouped expenses
     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}:')
     for tag, total_expense in expenses_by_tag.items():
         bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
-        
-
+#-------------------------------------------------------------------------------
+    bot.send_message( message.chat.id, f'Gasto total: R${expense_total}')
+     
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
