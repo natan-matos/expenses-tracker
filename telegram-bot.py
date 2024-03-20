@@ -52,9 +52,9 @@ def webhook():
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    itembtn1 = types.InlineKeyboardButton('Novos valores', callback_data='input')
-    itembtn2 = types.InlineKeyboardButton('Consultar Gastos', callback_data='query')
-    itembtn3 = types.InlineKeyboardButton('Exit', callback_data='exit')
+    itembtn1 = types.InlineKeyboardButton('💸 Novos valores', callback_data='input')
+    itembtn2 = types.InlineKeyboardButton('🔍 Consultar Gastos', callback_data='query')
+    itembtn3 = types.InlineKeyboardButton('🛑 Exit', callback_data='exit')
     markup.add(itembtn1, itembtn2, itembtn3)
     bot.send_message(message.chat.id, "Escolha uma opção:", reply_markup=markup)
 
