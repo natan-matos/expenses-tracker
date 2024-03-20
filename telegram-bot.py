@@ -84,7 +84,8 @@ def process_tag_step(call):
 def ask_for_month(call):
     
     response = table.scan(ProjectionExpression = 'Date')
-    month_year = set(item['Date'].split('-')[2] for item in response['Items'])
+    # month_year = set(item['Date'].split('-')[2] for item in response['Items'])
+    month_year = [1, 2, 3, 4, 5, 6, 7 ]
     markup = types.InlineKeyboardMarkup()
     for month_years in month_year:
         markup.add(types.InlineKeyboardButton( month_years, callback_data=month_years))
