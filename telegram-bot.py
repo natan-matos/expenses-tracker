@@ -80,32 +80,21 @@ def process_tag_step(call):
     bot.send_message(call.message.chat.id, 'Valor salvo.')
     send_welcome(call.message)
 
-def get_unique_month_years(table):
-    response = table.scan(ProjectionExpression='Date')
-    month_years = set(item['Date'].split('-')[:2] for item in response['Items'])
-    return month_years
-
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
-    #-----------------------------------------------------------------------------
-    # markup = types.InlineKeyboardMarkup()
-    # markup.add(types.InlineKeyboardButton( '03-2024', callback_data='03-2024'))
-
-    # sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
-    # bot.register_next_step_handler(sent, process_month_step)
-    #---------------------------------------------------------------------------------
+    
+    response = table.scan(ProjectionExpression = 'Date')
+    month_year = set(item['Date'].split('-')[2] for item in response['Items'])
     markup = types.InlineKeyboardMarkup()
-    month_years = get_unique_month_years(table)  # Get list of unique month-years
-    for month_year in month_years:
-        markup.add(types.InlineKeyboardButton(month_year, callback_data=month_year))
+    for month_years in month_year:
+        markup.add(types.InlineKeyboardButton( month_years, callback_data=month_years))
 
     sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
+    bot.register_next_step_handler(sent, process_month_step)
 
 
 def process_month_step(message):
-    # month, year = map(int, message.text.split('-'))
-    month_year = message.text
-    month, year = map(int, month_year.split('-'))
+    month, year = map(int, message.text.split('-'))
     response = table.scan(
         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
     )
