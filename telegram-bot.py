@@ -83,12 +83,12 @@ def process_tag_step(call):
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
     
-    response = table.scan(ProjectionExpression = 'Date')
-    # month_year = set(item['Date'].split('-')[2] for item in response['Items'])
-    month_year = [1, 2, 3, 4, 5, 6, 7 ]
+    # user_data['Expense'] = message.text
     markup = types.InlineKeyboardMarkup()
-    for month_years in month_year:
-        markup.add(types.InlineKeyboardButton( month_years, callback_data=month_years))
+    tags = ['mercado', 'farmacia', 'lanche', 'casa', 'outro']
+    for tag in tags:
+        markup.add(types.InlineKeyboardButton(tag, callback_data=f'tag_{tag}'))
+    # bot.send_message(call.message.chat.id, 'Escolha uma tag:', reply_markup=markup)
 
     sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
     bot.register_next_step_handler(sent, process_month_step)
