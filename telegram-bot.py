@@ -78,7 +78,6 @@ def process_tag_step(call):
     user_data['id'] = str(uuid.uuid4())
     table.put_item(Item=user_data)
     bot.send_message(call.message.chat.id, 'Valor salvo.')
-    bot.send_message(call.message.chate.id, ' ')
     send_welcome(call.message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
@@ -117,7 +116,6 @@ def process_month_step(message):
         bot.send_message(message.chat.id, f'{tag_emojis[tag]} {tag} em {month}-{year}: {expense} ({percent_change:+.2f}%)')
 
     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
-    bot.send_message(message.chat.id, ' ')
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
