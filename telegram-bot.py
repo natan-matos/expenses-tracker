@@ -82,7 +82,11 @@ def process_tag_step(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
-    sent = bot.send_message(call.message.chat.id, 'Inira Mês e Ano (format: MM-YYYY):')
+    
+    markup = types.InlineKeyboardMarkup()
+    markup.add(types.InlineKeyboardButton( '03-2024', callback_data='03-2024'))
+
+    sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
     bot.register_next_step_handler(sent, process_month_step)
 
 
