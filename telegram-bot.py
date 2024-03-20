@@ -82,9 +82,26 @@ def process_tag_step(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
+    #-----------------------------------------------------------------------------
+    # markup = types.InlineKeyboardMarkup()
+    # markup.add(types.InlineKeyboardButton( '03-2024', callback_data='03-2024'))
+
+    # sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
+    # bot.register_next_step_handler(sent, process_month_step)
+    #---------------------------------------------------------------------------------
     
+    # Query the database to get all the unique month-years
+    response = table.scan(
+        ProjectionExpression='Date',
+        ExpressionAttributeNames={"#yr": "year"}
+    )
+    dates = [item['Date'] for item in response['Items']]
+    unique_month_years = list(set('-'.join(date.split('-')[:2]) for date in dates))
+
+    # Create a button for each unique month-year
     markup = types.InlineKeyboardMarkup()
-    markup.add(types.InlineKeyboardButton( '03-2024', callback_data='03-2024'))
+    for month_year in unique_month_years:
+        markup.add(types.InlineKeyboardButton(month_year, callback_data=month_year))
 
     sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
     bot.register_next_step_handler(sent, process_month_step)
