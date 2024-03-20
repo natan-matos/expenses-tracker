@@ -83,7 +83,7 @@ def process_tag_step(call):
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
     markup = types.InlineKeyboardMarkup()
-    month = [1, 2, 3, 4, 5, 6, 7]
+    month = ['1', '2', '3', '4', '5', '6', '7']
     for tag in month:
         markup.add(types.InlineKeyboardButton(tag, callback_data=month))
    
