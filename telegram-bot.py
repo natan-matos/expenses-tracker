@@ -129,7 +129,7 @@ def process_month_step(message):
             percent_change = ((expense - prev_expense) / prev_expense) * 100
         else:
             percent_change = 100  # If there were no expenses in the previous month, consider it as a 100% increase
-        bot.send_message(message.chat.id, f'Total Gastos em {tag} em {month}-{year}: {expense} ({percent_change:+.2f}%)')
+        bot.send_message(message.chat.id, f'{tag} em {month}-{year}: {expense} ({percent_change:+.2f}%)')
 
     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
     send_welcome(message)
