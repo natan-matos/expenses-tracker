@@ -101,7 +101,7 @@ def ask_for_month(call):
     tags = df1['Month'].unique()
     for tag in tags:
         markup.add(types.InlineKeyboardButton(tag, callback_data=tag))
-    # bot.send_message(call.message.chat.id, 'Escolha uma tag:', reply_markup=markup)
+    bot.send_message(call.message.chat.id, 'Escolha uma tag:', reply_markup=markup)
 
     sent = bot.send_message(call.message.chat.id, 'Escolha o Mês', reply_markup=markup)
     bot.register_next_step_handler(sent, process_month_step)
