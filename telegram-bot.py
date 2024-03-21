@@ -82,10 +82,23 @@ def process_tag_step(call):
 
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
+    response = table.scan()
+    data = response['Items']
+    df = []
+    for item in data:
+        row = {
+            'id': item['id'],
+            'Date': item['Date'],
+            'Expense': item['Expense'],
+            'Tag': item['Tag']
+        }
+        df.append(row)
+    df1 = pd.DataFrame( df )
+    df1['Date'] = pd.to_datetime( df1['Date']).dt.normalize()
+    df1['Month'] = df1['Date'].dt.month
     
-    # user_data['Expense'] = message.text
     markup = types.InlineKeyboardMarkup()
-    tags = ['1', '2', '3', '4', '5']
+    tags = df1['Month'].unique()
     for tag in tags:
         markup.add(types.InlineKeyboardButton(tag, callback_data=tag))
     # bot.send_message(call.message.chat.id, 'Escolha uma tag:', reply_markup=markup)
@@ -123,7 +136,7 @@ def process_month_step(message):
             percent_change = 100  # If there were no expenses in the previous month, consider it as a 100% increase
         bot.send_message(message.chat.id, f'{tag_emojis[tag]} {tag} em {month}-{year}: {expense} ({percent_change:+.2f}%)')
 
-    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses:+2f}')
+    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses}')
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
