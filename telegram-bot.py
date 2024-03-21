@@ -80,12 +80,30 @@ def process_tag_step(call):
     bot.send_message(call.message.chat.id, 'Valor salvo.')
     send_welcome(call.message)
 
+def get_month():
+    response = table.scan()
+    data = response['Items']
+    df = []
+    for item in data:
+        row = {
+            'id': item['id'],
+            'Date': item['Date'],
+            'Expense': item['Expense'],
+            'Tag': item['Tag']
+        }
+        df.append(row)
+    df1 = pd.DataFrame( df )
+    df1['Date'] = pd.to_datetime( df1['Date']).dt.normalize()
+    df1['Month'] = df1['Date'].dt.month
+    months = df1['Month'].unique()
+    return months
+
 @bot.callback_query_handler(func=lambda call: call.data == 'query')
 def ask_for_month(call):
     
     # user_data['Expense'] = message.text
     markup = types.InlineKeyboardMarkup()
-    tags = ['1', '2', '3', '4', '5']
+    tags = get_month()
     for tag in tags:
         markup.add(types.InlineKeyboardButton(tag, callback_data=tag))
     # bot.send_message(call.message.chat.id, 'Escolha uma tag:', reply_markup=markup)
