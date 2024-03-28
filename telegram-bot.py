@@ -122,6 +122,19 @@ def process_month_step(message):
     for tag, total_expense in expenses_by_tag.items():
         bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
 
+<<<<<<< HEAD
+=======
+    # Calculate the percentage change for each tag
+    for tag, expense in expenses_by_tag.items():
+        prev_expense = prev_expenses_by_tag.get(tag, 0)
+        if prev_expense > 0:
+            percent_change = ((expense - prev_expense) / prev_expense) * 100
+        else:
+            percent_change = 100  # If there were no expenses in the previous month, consider it as a 100% increase
+        bot.send_message(message.chat.id, f'{tag_emojis[tag]} {tag} em {month}-{year}: {expense} ({percent_change:+.2f}%)')
+
+    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses:+2f}')
+>>>>>>> parent of 4dc5ab8 (decimal place set as 2)
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
