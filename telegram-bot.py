@@ -123,6 +123,7 @@ def process_month_step(message):
         bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
     # Calculate the percentage change for each tag
     for tag, expense in expenses_by_tag.items():
@@ -135,6 +136,8 @@ def process_month_step(message):
 
     bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses:+2f}')
 >>>>>>> parent of 4dc5ab8 (decimal place set as 2)
+=======
+>>>>>>> parent of 26af02f (Merge branch 'hotfix')
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
