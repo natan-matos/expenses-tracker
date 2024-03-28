@@ -8,7 +8,6 @@ import pandas as pd
 import os
 import uuid
 from flask import Flask, request
-from collections import defaultdict
 
 # constants
 TOKEN = '6497461668:AAHIy0QYyuGePFj-xTxaBxnxiPMtWzLzuRw'
@@ -30,13 +29,6 @@ dynamodb = session.resource( 'dynamodb', region_name='us-east-2')
 table = dynamodb.Table( 'ExpensesTable' )
 
 user_data = {}
-tag_emojis = {
-    'mercado': '🛒',
-    'farmacia': '💊',
-    'lanche': '🍔',
-    'casa': '🏠',
-    'outro': '❓'
-}
 
 @app.route(f'/', methods=['POST'])
 def getMessage():
@@ -52,9 +44,9 @@ def webhook():
 @bot.message_handler(commands=['start'])
 def send_welcome(message):
     markup = types.InlineKeyboardMarkup(row_width=2)
-    itembtn1 = types.InlineKeyboardButton('💸 Novos valores', callback_data='input')
-    itembtn2 = types.InlineKeyboardButton('🔍 Consultar Gastos', callback_data='query')
-    itembtn3 = types.InlineKeyboardButton('🛑 Exit', callback_data='exit')
+    itembtn1 = types.InlineKeyboardButton('Novos valores', callback_data='input')
+    itembtn2 = types.InlineKeyboardButton('Consultar Gastos', callback_data='query')
+    itembtn3 = types.InlineKeyboardButton('Exit', callback_data='exit')
     markup.add(itembtn1, itembtn2, itembtn3)
     bot.send_message(message.chat.id, "Escolha uma opção:", reply_markup=markup)
 
@@ -113,34 +105,23 @@ def ask_for_month(call):
 
 def process_month_step(message):
     month, year = map(int, message.text.split('-'))
+
     response = table.scan(
         FilterExpression=Key('Date').begins_with(f'{year}-{month:02d}')
     )
-    expenses_by_tag = defaultdict(float)
-    total_expenses = 0
+
+    expenses_by_tag = {}
     for item in response['Items']:
-        expenses_by_tag[item['Tag']] += float(item['Expense'])
-        total_expenses += float(item['Expense'])
+        tag = item['Tag']
+        expense = float(item['Expense'])
+        expenses_by_tag.setdefault(tag, 0)  # Initialize tag if not present
+        expenses_by_tag[tag] += expense
 
-    # Get the previous month's expenses
-    prev_month, prev_year = (month - 1, year) if month > 1 else (12, year - 1)
-    prev_response = table.scan(
-        FilterExpression=Key('Date').begins_with(f'{prev_year}-{prev_month:02d}')
-    )
-    prev_expenses_by_tag = defaultdict(float)
-    for item in prev_response['Items']:
-        prev_expenses_by_tag[item['Tag']] += float(item['Expense'])
+    # Format and send the grouped expenses
+    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}:')
+    for tag, total_expense in expenses_by_tag.items():
+        bot.send_message(message.chat.id, f'- {tag}: {total_expense:.2f}')
 
-    # Calculate the percentage change for each tag
-    for tag, expense in expenses_by_tag.items():
-        prev_expense = prev_expenses_by_tag.get(tag, 0)
-        if prev_expense > 0:
-            percent_change = ((expense - prev_expense) / prev_expense) * 100
-        else:
-            percent_change = 100  # If there were no expenses in the previous month, consider it as a 100% increase
-        bot.send_message(message.chat.id, f'{tag_emojis[tag]} {tag} em {month}-{year}: {expense:+.2f} ({percent_change:+.2f}%)')
-
-    bot.send_message(message.chat.id, f'Total Gastos em {month}-{year}: {total_expenses:+.2f}')
     send_welcome(message)
 
 @bot.callback_query_handler(func=lambda call: call.data == 'exit')
