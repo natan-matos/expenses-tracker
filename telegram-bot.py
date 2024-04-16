@@ -64,12 +64,16 @@ def ask_for_value(call):
     bot.register_next_step_handler(sent, process_value_step)
 
 def process_value_step(message):
-    user_data['Expense'] = message.text
-    markup = types.InlineKeyboardMarkup()
-    tags = ['mercado', 'farmacia', 'lanche', 'casa', 'outro']
-    for tag in tags:
-        markup.add(types.InlineKeyboardButton(tag, callback_data=f'tag_{tag}'))
-    bot.send_message(message.chat.id, 'Escolha uma tag:', reply_markup=markup)
+    if ',' in message.text:
+        sent = bot.send_message(message.chat.id, 'Insira um valor usando ponto, não virgula')
+        bot.register_next_step_handler(sent, process_value_step)
+    else:
+        user_data['Expense'] = message.text
+        markup = types.InlineKeyboardMarkup()
+        tags = ['mercado', 'farmacia', 'lanche', 'casa', 'outro']
+        for tag in tags:
+            markup.add(types.InlineKeyboardButton(tag, callback_data=f'tag_{tag}'))
+        bot.send_message(message.chat.id, 'Escolha uma tag:', reply_markup=markup)
 
 @bot.callback_query_handler(func=lambda call: call.data.startswith('tag_'))
 def process_tag_step(call):
